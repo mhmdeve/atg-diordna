@@ -95,7 +95,7 @@ fn raise_open_file_limit() {
         fn getrlimit(resource: i32, rlp: *mut Rlimit) -> i32;
         fn setrlimit(resource: i32, rlp: *const Rlimit) -> i32;
     }
-    const RLIMIT_NOFILE: i32 = 8;
+    const RLIMIT_NOFILE: i32 = if cfg!(target_os = "android") { 7 } else { 8 };
     let mut r = Rlimit { cur: 0, max: 0 };
     unsafe {
         if getrlimit(RLIMIT_NOFILE, &mut r) == 0 {
@@ -108,6 +108,7 @@ fn raise_open_file_limit() {
     }
 }
 
+#[cfg(not(target_os = "android"))]
 fn main() -> Result<()> {
     raise_open_file_limit();
     let argv: Vec<String> = std::env::args().collect();
@@ -242,10 +243,10 @@ pub fn run_engine(rt: &Arc<Runtime>, args: Vec<String>) -> Result<()> {
     Ok(())
 }
 
-#[cfg(all(not(feature = "jit"), not(target_os = "ios"), not(game_code)))]
+#[cfg(all(not(feature = "jit"), not(any(target_os = "ios", target_os = "android")), not(game_code)))]
 compile_error!("the macOS build needs the default `jit` feature, or MUGUET_GAME_CODE with the precompiled game");
 
-#[cfg(all(not(feature = "jit"), not(target_os = "ios"), game_code))]
+#[cfg(all(not(feature = "jit"), not(any(target_os = "ios", target_os = "android")), game_code))]
 fn load_module(engine: &Engine, _startup: &config::Startup) -> Result<Module> {
     static GAME_CODE: &[u8] = include_bytes!(env!("MUGUET_GAME_CODE"));
     unsafe { Module::deserialize(engine, GAME_CODE) }.map_err(anyhow::Error::from).context("embedded game code")
@@ -343,6 +344,8 @@ fn compile_patched(engine: &Engine, wasm_path: &std::path::Path) -> Result<Modul
 }
 
 const IOS_HEAP_MAX: u64 = ios_heap_gb() << 30;
+const ANDROID_HEAP_MAX: u64 = android_heap_gb() << 30;
+const fn android_heap_gb() -> u64 { match option_env!("MUGUET_ANDROID_HEAP_GB") { Some(v) => { let b = v.as_bytes(); let mut n = 0u64; let mut k = 0; while k < b.len() { n = n * 10 + (b[k] - b'0') as u64; k += 1; } n }, None => 4 } }
 const fn ios_heap_gb() -> u64 {
     match option_env!("MUGUET_IOS_HEAP_GB") {
         Some(v) => {
@@ -381,7 +384,7 @@ fn engine_config() -> Config {
 }
 
 fn ios_memory() -> bool {
-    cfg!(target_os = "ios")
+    cfg!(any(target_os = "ios", target_os = "android"))
 }
 
 fn engine_config_for(ios: bool) -> Config {
@@ -395,7 +398,7 @@ fn engine_config_for(ios: bool) -> Config {
     config.cranelift_opt_level(OptLevel::Speed);
 
     if ios {
-        config.memory_reservation(IOS_HEAP_MAX);
+        config.memory_reservation(if cfg!(target_os = "android") { ANDROID_HEAP_MAX } else { IOS_HEAP_MAX });
         config.memory_guard_size(64 << 10);
     } else {
         config.memory_reservation(17 << 30);
@@ -579,9 +582,13 @@ pub fn read_cstr(mem: &SharedMemory, addr: u64) -> String {
 }
 
 pub fn alert(title: &str, msg: &str) {
-    let script = format!("display alert \"{}\" message \"{}\" as critical",
-        title.replace('"', "'"), msg.replace('"', "'"));
-    let _ = std::process::Command::new("osascript").args(["-e", &script]).status();
+    #[cfg(target_os = "android")]
+    { eprintln!("[{title}] {msg}"); }
+    #[cfg(not(target_os = "android"))]
+    {
+        let script = format!("display alert \"{}\" message \"{}\" as critical", title.replace('"', "'"), msg.replace('"', "'"));
+        let _ = std::process::Command::new("osascript").args(["-e", &script]).status();
+    }
 }
 
 
