@@ -76,7 +76,7 @@ pub fn touch(t: &Touch) {
             }).map(|(i,_)|i);
             if let Some(idx)=in_button {
                 s.grips.insert(t.id,Grip::Button{idx,start:p,last:p});
-                match BUTTONS[idx].foot { Action::Aim if !s.in_car=>s.aim=!s.aim, Action::Nav=>{},_=>{} }
+                match BUTTONS[idx].foot { Action::Aim if !s.in_car=>s.aim=!s.aim, Action::Nav=>{s.nav=!s.nav},_=>{} }
             } else if is_left && !s.grips.values().any(|g|matches!(g,Grip::Stick{..})) {
                 s.grips.insert(t.id,Grip::Stick{origin:p,at:p});
             } else { s.grips.insert(t.id,Grip::Look{last:p}); }
@@ -114,7 +114,7 @@ fn apply(s:&mut State) {
                 Action::Key(k)=>{keys.insert(k);},
                 Action::Mouse(b)=>mouse|=b,
                 Action::Horn=>horn=true,
-                Action::Nav=>s.nav=!s.nav,
+                Action::Nav=>{},
                 Action::Aim|Action::Nav=>{},
             },
             Grip::Look{..}=>{}
