@@ -103,9 +103,7 @@ pub fn setup() -> anyhow::Result<Startup> {
 
     set_default("MUGUET_FSROOT", support.join("saves"));
     let build = locate();
-    #[cfg(not(any(target_os = "ios", target_os = "android")))]
-    let build = build?;
-    #[cfg(target_os = "android")]
+    #[cfg(not(target_os = "ios"))]
     let build = build?;
     #[cfg(target_os = "ios")]
     let build = build.unwrap_or_default();
