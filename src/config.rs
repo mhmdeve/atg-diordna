@@ -143,20 +143,22 @@ fn settings(cfg_path: &Path) -> Vec<String> {
     let num = |k: &str| cfg.get(k).and_then(|v| v.as_f64());
     let flag = |k: &str| cfg.get(k).and_then(|v| v.as_bool()).unwrap_or(false);
     for v in SETTING_VARS { std::env::remove_var(v); }
-    if let Some(v) = num("scale") { std::env::set_var("MUGUET_SCALE", v.to_string()); }
-    if let Some(v) = num("mouse_sensitivity") { std::env::set_var("MUGUET_MOUSE_SENS", v.to_string()); }
-    if let Some(v) = num("touch_sensitivity") { std::env::set_var("MUGUET_TOUCH_SENS", v.to_string()); }
-    if let Some(r) = cfg.get("resolution").and_then(|v| v.as_str()) { std::env::set_var("MUGUET_RES", r); }
-    if flag("fullscreen") { std::env::set_var("MUGUET_FULLSCREEN", "1"); }
-    if flag("mute") { std::env::set_var("MUGUET_MUTE", "1"); }
-    if flag("show_fps") { std::env::set_var("MUGUET_SHOW_FPS", "1"); }
+    let set_or_remove = |key: &str, value: Option<String>| {
+        if let Some(value) = value { std::env::set_var(key, value); }
+        else { std::env::remove_var(key); }
+    };
+    set_or_remove("MUGUET_SCALE", num("scale").map(|v| v.to_string()));
+    set_or_remove("MUGUET_MOUSE_SENS", num("mouse_sensitivity").map(|v| v.to_string()));
+    set_or_remove("MUGUET_TOUCH_SENS", num("touch_sensitivity").map(|v| v.to_string()));
+    set_or_remove("MUGUET_RES", cfg.get("resolution").and_then(|v| v.as_str()).map(String::from));
+    set_or_remove("MUGUET_FULLSCREEN", flag("fullscreen").then(|| "1".to_string()));
+    set_or_remove("MUGUET_MUTE", flag("mute").then(|| "1".to_string()));
+    set_or_remove("MUGUET_SHOW_FPS", flag("show_fps").then(|| "1".to_string()));
 
     let text = |k: &str| cfg.get(k).and_then(|v| v.as_str()).map(str::trim).filter(|v| !v.is_empty());
-    if flag("multiplayer") {
-        if flag("host") { std::env::set_var("MUGUET_HOST", "1"); }
-        else if let Some(v) = text("server") { std::env::set_var("MUGUET_SERVER", v); }
-    }
-    if let Some(v) = text("player_name") { std::env::set_var("MUGUET_NAME", v); }
+    set_or_remove("MUGUET_HOST", if flag("multiplayer") && flag("host") { Some("1".into()) } else { None });
+    set_or_remove("MUGUET_SERVER", if flag("multiplayer") && !flag("host") { text("server").map(String::from) } else { None });
+    set_or_remove("MUGUET_NAME", if flag("multiplayer") { text("player_name").map(String::from) } else { None });
 
     let mut engine_args = Vec::new();
 
