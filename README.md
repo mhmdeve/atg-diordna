@@ -52,6 +52,45 @@ Please install this app with AltStore. This probably won't work well with Sidelo
 
 The app also works with a paid developer account.
 
+
+## Android (experimental)
+
+An Android Studio port is available on the [`android`](https://github.com/mhmdeve/atg-diordna/tree/android) branch. The original iOS/macOS project and its Apple-specific code remain available.
+
+### Android requirements
+
+- Android Studio with Android SDK and NDK installed
+- Rust toolchain and the `aarch64-linux-android` target
+- `cargo-ndk`
+- An arm64 Android device for practical testing
+- Your own compatible game-data ZIP; game data is not included in this repository
+
+### Build for Android
+
+Switch to the Android branch:
+
+```bash
+git switch android
+rustup target add aarch64-linux-android
+cargo install cargo-ndk
+```
+
+Set `ANDROID_NDK_HOME` to the NDK directory installed by Android Studio, then build the native library:
+
+```bash
+./scripts/build-android.sh
+```
+
+Alternatively, open the repository root in Android Studio, sync Gradle, and run the `app` configuration on an arm64 device. On Windows, use `gradlew.bat` for Gradle commands; the native Rust build script must also be run in a compatible shell with Rust and the Android NDK configured.
+
+On first launch, choose **Import game data .zip** and select your own compatible archive containing `data/manifest.json` and `b/<build>/shaders/index.json`, then tap **Play**.
+
+### Android status and limitations
+
+This is an **experimental, in-progress port**, not yet a verified release build. The Android Gradle project, native activity integration, Rust Android entry point, launcher settings, data import, and Android build workflow are present. A successful Android NDK/Gradle build and on-device runtime test have not yet been confirmed.
+
+The Android launcher uses native Android views and is not pixel-identical to the SwiftUI/UIKit interface. The touch-input mapping is in progress; matching translucent joystick/button rendering and complete external game-controller parity still require implementation and physical-device testing. See [README-ANDROID.md](https://github.com/mhmdeve/atg-diordna/blob/android/README-ANDROID.md) for Android-specific setup and current limitations.
+
 ## Multiplayer
 One player hosts from the launcher (or runs `muguet-server` on any machine), the others join with that address. UDP port 47520
 
