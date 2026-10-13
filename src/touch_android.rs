@@ -64,6 +64,7 @@ static STATE: LazyLock<Mutex<State>> = LazyLock::new(|| Mutex::new(State::defaul
 
 pub fn touch(t: &Touch) {
     let mut s=STATE.lock().unwrap();
+    s.size = (1280.0, 720.0);
     let p=(t.location.x/s.scale,t.location.y/s.scale);
     match t.phase {
         TouchPhase::Started => {
