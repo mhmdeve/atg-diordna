@@ -45,7 +45,7 @@ impl ApplicationHandler for App {
     fn resumed(&mut self, el: &ActiveEventLoop) {
         gpu::SUSPENDED.store(false, std::sync::atomic::Ordering::Relaxed);
 
-        #[cfg(target_os = "ios")]
+        #[cfg(any(target_os = "ios", target_os = "android"))]
         input::set_focus(true);
         if self.window.is_some() {
             return;
