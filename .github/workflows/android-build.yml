@@ -1,0 +1,35 @@
+name: Android build
+
+on:
+  push:
+    branches: [android]
+  pull_request:
+    branches: [android]
+  workflow_dispatch:
+
+jobs:
+  android-arm64:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android NDK
+        run: sdkmanager "ndk;27.2.12479018" "platforms;android-36" "build-tools;36.0.0"
+      - name: Configure NDK
+        run: echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - name: Install Rust and cargo-ndk
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add aarch64-linux-android
+          cargo install cargo-ndk
+      - name: Gradle build
+        run: |
+          cd android
+          ./gradlew assembleDebug
