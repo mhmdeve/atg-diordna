@@ -15,6 +15,8 @@ pub struct Startup {
 const DEFAULT_CONFIG: &str = r#"{
   "scale": 0.5,
   "mouse_sensitivity": 2.0,
+  "touch_sensitivity": 1.0,
+  "texture_quality": 0,
   "fullscreen": true,
   "fps_limit": 60,
   "start_mode": 2,
