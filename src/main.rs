@@ -20,6 +20,9 @@ mod proto;
 mod server;
 #[cfg(target_os = "ios")]
 mod touch;
+#[cfg(target_os = "android")]
+#[path = "touch_android.rs"]
+mod touch_android;
 
 use anyhow::{Context, Result};
 use std::sync::atomic::AtomicU64;
