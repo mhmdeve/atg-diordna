@@ -65,7 +65,11 @@ impl ApplicationHandler for App {
             window.set_fullscreen(Some(Fullscreen::Borderless(None)));
         }
         let mut desc = wgpu::InstanceDescriptor::new_without_display_handle();
-        desc.backends = wgpu::Backends::METAL;
+        desc.backends = if cfg!(target_os = "android") {
+            wgpu::Backends::VULKAN | wgpu::Backends::GL
+        } else {
+            wgpu::Backends::METAL
+        };
         let instance = wgpu::Instance::new(desc);
         let surface = instance.create_surface(window.clone()).expect("create surface");
         *gpu::SURFACE.lock().unwrap() = Some(gpu::SurfaceHandoff { instance, surface, window: window.clone() });
@@ -271,4 +275,9 @@ pub fn run(rt: Option<Arc<Runtime>>, startup: crate::config::Startup, args: Vec<
     let mut app = App { mode_chosen: false, rt, startup, args, window: None, started: false, launcher_shown: false, locked: false, mods: ModifiersState::empty(), wheel_accum: 0.0 };
     event_loop.run_app(&mut app)?;
     Ok(())
+}
+
+#[cfg(target_os = "android")]
+pub fn android_run(rt: Option<Arc<Runtime>>, startup: crate::config::Startup, args: Vec<String>) -> App {
+    App { mode_chosen: false, rt, startup, args, window: None, started: false, launcher_shown: true, locked: false, mods: ModifiersState::empty(), wheel_accum: 0.0 }
 }
