@@ -144,7 +144,17 @@ public final class MainActivity extends Activity {
         multiplayerDetails.addView(serverAddress, matchWrap());
         form.addView(multiplayerDetails, matchWrap());
         multiplayer.setOnCheckedChangeListener((button, checked) -> multiplayerDetails.setVisibility(checked ? View.VISIBLE : View.GONE));
-        session.setOnItemSelectedListener(new SimpleItemSelectedListener(() -> serverAddress.setVisibility(session.getSelectedItemPosition() == 0 ? View.VISIBLE : View.GONE)));
+        session.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                serverAddress.setVisibility(position == 0 ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                serverAddress.setVisibility(View.GONE);
+            }
+        });
 
         scroll.addView(form);
         page.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
