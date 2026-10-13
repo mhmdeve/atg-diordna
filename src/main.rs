@@ -89,20 +89,23 @@ fn engine_thread_qos(name: &str) -> u32 {
 }
 
 fn raise_open_file_limit() {
-    #[repr(C)]
-    struct Rlimit { cur: u64, max: u64 }
-    extern "C" {
-        fn getrlimit(resource: i32, rlp: *mut Rlimit) -> i32;
-        fn setrlimit(resource: i32, rlp: *const Rlimit) -> i32;
-    }
-    const RLIMIT_NOFILE: i32 = if cfg!(target_os = "android") { 7 } else { 8 };
-    let mut r = Rlimit { cur: 0, max: 0 };
-    unsafe {
-        if getrlimit(RLIMIT_NOFILE, &mut r) == 0 {
-            let want = r.max.min(10240);
-            if want > r.cur {
-                r.cur = want;
-                setrlimit(RLIMIT_NOFILE, &r);
+    #[cfg(not(target_os = "android"))]
+    {
+        #[repr(C)]
+        struct Rlimit { cur: u64, max: u64 }
+        extern "C" {
+            fn getrlimit(resource: i32, rlp: *mut Rlimit) -> i32;
+            fn setrlimit(resource: i32, rlp: *const Rlimit) -> i32;
+        }
+        const RLIMIT_NOFILE: i32 = 8;
+        let mut r = Rlimit { cur: 0, max: 0 };
+        unsafe {
+            if getrlimit(RLIMIT_NOFILE, &mut r) == 0 {
+                let want = r.max.min(10240);
+                if want > r.cur {
+                    r.cur = want;
+                    setrlimit(RLIMIT_NOFILE, &r);
+                }
             }
         }
     }
