@@ -370,10 +370,4 @@ public final class MainActivity extends Activity {
         f.delete();
     }
 
-    private abstract static class SimpleItemSelectedListener implements android.widget.AdapterView.OnItemSelectedListener {
-        private final Runnable changed;
-        SimpleItemSelectedListener(Runnable r) { changed = r; }
-        public void onItemSelected(android.widget.AdapterView<?> p, View v, int position, long id) { changed.run(); }
-        public void onNothingSelected(android.widget.AdapterView<?> p) {}
-    }
 }
