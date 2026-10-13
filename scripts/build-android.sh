@@ -12,6 +12,8 @@ if [ -z "${ANDROID_NDK_HOME:-}" ] && [ -z "${ANDROID_NDK_ROOT:-}" ]; then
 fi
 
 rustup target add aarch64-linux-android
-cargo ndk -t arm64-v8a -o app/src/main/jniLibs build --release --lib
+# cpal's Android AAudio backend links libaaudio, which is available from Android API 26.
+# Use API 28 to match the app's minSdk and ensure cargo-ndk uses the correct NDK sysroot.
+cargo ndk -t arm64-v8a -p 28 -o app/src/main/jniLibs build --release --lib
 test -f app/src/main/jniLibs/arm64-v8a/libmuguet.so
 echo "Built app/src/main/jniLibs/arm64-v8a/libmuguet.so"
