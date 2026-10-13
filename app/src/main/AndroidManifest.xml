@@ -25,7 +25,7 @@
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode|density|layoutDirection|locale|navigation|touchscreen"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:theme="@style/MuguetTheme"
             android:windowSoftInputMode="adjustNothing">
             <meta-data android:name="android.app.lib_name" android:value="muguet" />
         </activity>
