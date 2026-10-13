@@ -312,13 +312,15 @@ public final class MainActivity extends Activity {
             double[] scales = {0.35,0.5,0.75,1.0,0.5};
             int[] tex = {0,0,1,2,texture};
             int[] frames = {30,60,60,60,frame};
-            int idx = java.util.Arrays.asList(presets).indexOf(((String)graphics.getSelectedItem()));
+            int idx = graphics.getSelectedItemPosition();
             scale = scales[idx]; texture = tex[idx]; frame = frames[idx];
         }
         config.put("scale", scale);
+        config.put("resolution", String.format(Locale.US, "%dx%d", (int)(1280*scale), (int)(720*scale)));
         config.put("texture_quality", texture);
         config.put("fps_limit", frame);
         config.put("touch_sensitivity", 0.25 + sensitivity.getProgress() * 0.25);
+        config.put("mouse_sensitivity", 2.0);
         config.put("mute", mute.isChecked());
         config.put("show_fps", showFps.isChecked());
         config.put("multiplayer", multiplayer.isChecked());
