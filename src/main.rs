@@ -616,7 +616,10 @@ pub fn android_main(app: winit::platform::android::activity::AndroidApp) {
     args.extend(startup.engine_args.clone());
     let rt = match make_runtime(&startup) {
         Ok(rt) => Some(rt),
-        Err(e) => { eprintln!("[host] runtime init failed: {e:#}"); None }
+        Err(e) => {
+            eprintln!("[host] runtime init failed: {e:#}");
+            return;
+        }
     };
     let mut builder = winit::event_loop::EventLoop::builder();
     use winit::platform::android::EventLoopBuilderExtAndroid;
