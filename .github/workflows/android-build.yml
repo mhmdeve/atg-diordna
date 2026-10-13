@@ -19,6 +19,9 @@ jobs:
           java-version: '21'
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # "tools" is no longer a valid SDK package; install platform-tools explicitly.
+          packages: 'platform-tools'
       - name: Install Android NDK
         run: sdkmanager "ndk;27.2.12479018" "platforms;android-36" "build-tools;36.0.0"
       - name: Configure NDK
