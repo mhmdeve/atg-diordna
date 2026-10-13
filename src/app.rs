@@ -13,7 +13,7 @@ use winit::window::{CursorGrabMode, Fullscreen, Window, WindowId};
 const TITLE: &str = "Muguet";
 const PICK_TITLE: &str = "Muguet — loading: press Enter for Story Mode, or Space then 5 for Sandbox";
 
-struct App {
+pub(crate) struct App {
     mode_chosen: bool,
     rt: Option<Arc<Runtime>>,
     startup: crate::config::Startup,
