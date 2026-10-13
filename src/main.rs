@@ -575,3 +575,40 @@ pub fn alert(title: &str, msg: &str) {
         title.replace('"', "'"), msg.replace('"', "'"));
     let _ = std::process::Command::new("osascript").args(["-e", &script]).status();
 }
+
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub fn android_main(app: winit::platform::android::activity::AndroidApp) {
+    let data = app.internal_data_path();
+    if let Some(path) = data {
+        let root = path.to_string_lossy().to_string();
+        std::env::set_var("HOME", &root);
+        std::env::set_var("MUGUET_HOME", &root);
+    }
+    let startup = match config::setup() {
+        Ok(s) => s,
+        Err(e) => { eprintln!("[config] {e:#}"); return; }
+    };
+    let mut args: Vec<String> = [
+        "./this.program", "-rootdir=/game/", "-nodisplaycalibration", "-noSocialClub",
+        "-pc:nosocialclub", "-nonetwork", "-output", "-forceResolution",
+        "-Script_all=warning", "-replay_all=warning", "-fastscriptcore",
+    ].iter().map(|s| s.to_string()).collect();
+    args.extend(startup.engine_args.clone());
+    let rt = match make_runtime(&startup) {
+        Ok(rt) => Some(rt),
+        Err(e) => { eprintln!("[host] runtime init failed: {e:#}"); None }
+    };
+    let mut builder = winit::event_loop::EventLoop::builder();
+    use winit::platform::android::EventLoopBuilderExtAndroid;
+    builder.with_android_app(app);
+    let event_loop = match builder.build() {
+        Ok(e) => e,
+        Err(e) => { eprintln!("[android] event loop: {e}"); return; }
+    };
+    let mut application = app::android_run(rt, startup, args);
+    if let Err(e) = event_loop.run_app(&mut application) {
+        eprintln!("[android] app terminated: {e}");
+    }
+}
