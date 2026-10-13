@@ -75,7 +75,7 @@ pub fn touch(t: &Touch) {
             }).map(|(i,_)|i);
             if let Some(idx)=in_button {
                 s.grips.insert(t.id,Grip::Button{idx,start:p,last:p});
-                match BUTTONS[idx].foot { Action::Aim if !s.in_car=>s.aim=!s.aim, Action::Nav=>s.nav=!s.nav,_=>{} }
+                match BUTTONS[idx].foot { Action::Aim if !s.in_car=>s.aim=!s.aim, Action::Nav=>{},_=>{} }
             } else if is_left && !s.grips.values().any(|g|matches!(g,Grip::Stick{..})) {
                 s.grips.insert(t.id,Grip::Stick{origin:p,at:p});
             } else { s.grips.insert(t.id,Grip::Look{last:p}); }
@@ -97,9 +97,8 @@ pub fn touch(t: &Touch) {
 fn button_center(b:&Button,s:&State)->(f64,f64) {
     let right=s.size.0-b.x;
     let bottom=s.size.1-b.y;
-    if b.x==30. || b.x==84. || b.x==138. || b.x==192. {
-        // Top buttons sit near their respective top edge; first group is right aligned.
-        if b.y==30. { if b.x>=30. { return (s.size.0-b.x,b.y); } }
+    if b.y==30. {
+        if b.x<=192. { return (s.size.0-b.x,b.y); }
     }
     (right,bottom)
 }
