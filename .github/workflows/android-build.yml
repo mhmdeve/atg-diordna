@@ -32,4 +32,4 @@ jobs:
           rustup target add aarch64-linux-android
           cargo install cargo-ndk
       - name: Gradle build
-        run: ./gradlew assembleDebug
+        run: bash ./gradlew assembleDebug
