@@ -620,7 +620,7 @@ pub fn android_main(app: winit::platform::android::activity::AndroidApp) {
     };
     let mut builder = winit::event_loop::EventLoop::builder();
     use winit::platform::android::EventLoopBuilderExtAndroid;
-    builder.with_android_app(app);
+    builder.with_android_app(app.clone());
     let event_loop = match builder.build() {
         Ok(e) => e,
         Err(e) => { eprintln!("[android] event loop: {e}"); return; }
