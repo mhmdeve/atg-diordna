@@ -32,6 +32,9 @@ fn support_dir() -> PathBuf {
     if cfg!(target_os = "ios") {
         return PathBuf::from(home).join("Documents");
     }
+    if cfg!(target_os = "android") {
+        return std::env::var_os("MUGUET_HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from(home)).join("Muguet");
+    }
     PathBuf::from(home).join("Library/Application Support/Muguet")
 }
 
@@ -100,7 +103,9 @@ pub fn setup() -> anyhow::Result<Startup> {
 
     set_default("MUGUET_FSROOT", support.join("saves"));
     let build = locate();
-    #[cfg(not(target_os = "ios"))]
+    #[cfg(not(any(target_os = "ios", target_os = "android")))]
+    let build = build?;
+    #[cfg(target_os = "android")]
     let build = build?;
     #[cfg(target_os = "ios")]
     let build = build.unwrap_or_default();
