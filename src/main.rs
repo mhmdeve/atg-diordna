@@ -144,6 +144,7 @@ fn main() -> Result<()> {
         use std::os::fd::AsFd;
         std::io::stdout().as_fd().try_clone_to_owned().map(std::fs::File::from)
     };
+    let _ = std::fs::create_dir_all(std::path::PathBuf::from(std::env::var("MUGUET_HOME").unwrap_or_else(|_| ".".into())).join("Muguet"));
     let startup = match config::setup() {
         Ok(s) => s,
         Err(e) => {
