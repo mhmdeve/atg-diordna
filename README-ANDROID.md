@@ -22,6 +22,8 @@ cargo install cargo-ndk
 ./scripts/build-android.sh
 ```
 
+The build script targets Android API 28 (`cargo ndk -p 28`), matching the app's `minSdk = 28`. This is important because CPAL's Android AAudio backend links `libaaudio`, which is provided by the Android NDK sysroot for API 26 and later. If you see `ld.lld: error: unable to find library -laaudio`, check that the script includes `-p 28` and that `ANDROID_NDK_HOME` points to a valid NDK installation.
+
 ## Android adaptation notes
 
 - The app entry point uses Winit's Android NativeActivity integration.
@@ -30,11 +32,8 @@ cargo install cargo-ndk
 - Android's default Wasm heap reservation is capped at 4 GiB. Set `MUGUET_ANDROID_HEAP_GB` at Rust compile time to alter it.
 - The launcher mirrors the iOS options (mode, graphics preset, resolution scale, textures, frame limit, touch sensitivity, mute, FPS display, multiplayer name/host settings). The exact SwiftUI layout is not copied pixel-for-pixel: Android uses native Android views.
 - Android touch input is wired to the game-facing input actions. The translucent button/joystick overlay's native drawing and all controller-specific behavior still need validation and parity work on physical Android devices.
-- The Rust crate and Gradle project have been wired, but a successful Android NDK/Gradle build has not been run in this environment. The native touch overlay is currently input-mapping scaffolding rather than a pixel-matched rendering of the UIKit overlay, and external gamepad parity still needs implementation. Treat the branch as an in-progress port until it is built and tested with Android Studio and a physical device.
-
+- The Android port is still in progress. A successful CI build and physical-device runtime test are required before treating it as release-ready.
 
 ## Build status and parity scope
 
-The project currently contains the Android Gradle module, NativeActivity entry point, Rust Android target adaptation, launcher settings form, ZIP data import, and an Android build workflow. It has **not** been compiled in this session because Rust/Cargo, Gradle, and Android SDK/NDK are unavailable in the runtime.
-
-The visual behavior is not yet an exact replica of the SwiftUI/UIKit UI. The launcher preserves most settings and the Rust-side Android touch module maps touch gestures to game input, but its on-screen controls are not yet drawn as the matching translucent iOS buttons and joystick, and physical game-controller parity remains incomplete. The workflow is intended to expose compile errors once run in GitHub Actions; resolve those before treating this as release-ready.
+The project contains the Android Gradle module, NativeActivity entry point, Rust Android target adaptation, launcher settings form, ZIP data import, and an Android build workflow. The visual behavior is not yet an exact replica of the SwiftUI/UIKit UI. The launcher preserves most settings and the Rust-side Android touch module maps touch gestures to game input, but the on-screen controls and external game-controller behavior still need parity work and device testing.
