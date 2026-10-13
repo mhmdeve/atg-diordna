@@ -142,20 +142,21 @@ fn settings(cfg_path: &Path) -> Vec<String> {
         .unwrap_or_else(|| serde_json::from_str(DEFAULT_CONFIG).unwrap());
     let num = |k: &str| cfg.get(k).and_then(|v| v.as_f64());
     let flag = |k: &str| cfg.get(k).and_then(|v| v.as_bool()).unwrap_or(false);
-    if let Some(v) = num("scale") { set_default("MUGUET_SCALE", v.to_string()); }
-    if let Some(v) = num("mouse_sensitivity") { set_default("MUGUET_MOUSE_SENS", v.to_string()); }
-    if let Some(v) = num("touch_sensitivity") { set_default("MUGUET_TOUCH_SENS", v.to_string()); }
-    if let Some(r) = cfg.get("resolution").and_then(|v| v.as_str()) { set_default("MUGUET_RES", r); }
-    if flag("fullscreen") { set_default("MUGUET_FULLSCREEN", "1"); }
-    if flag("mute") { set_default("MUGUET_MUTE", "1"); }
-    if flag("show_fps") { set_default("MUGUET_SHOW_FPS", "1"); }
+    for v in SETTING_VARS { std::env::remove_var(v); }
+    if let Some(v) = num("scale") { std::env::set_var("MUGUET_SCALE", v.to_string()); }
+    if let Some(v) = num("mouse_sensitivity") { std::env::set_var("MUGUET_MOUSE_SENS", v.to_string()); }
+    if let Some(v) = num("touch_sensitivity") { std::env::set_var("MUGUET_TOUCH_SENS", v.to_string()); }
+    if let Some(r) = cfg.get("resolution").and_then(|v| v.as_str()) { std::env::set_var("MUGUET_RES", r); }
+    if flag("fullscreen") { std::env::set_var("MUGUET_FULLSCREEN", "1"); }
+    if flag("mute") { std::env::set_var("MUGUET_MUTE", "1"); }
+    if flag("show_fps") { std::env::set_var("MUGUET_SHOW_FPS", "1"); }
 
     let text = |k: &str| cfg.get(k).and_then(|v| v.as_str()).map(str::trim).filter(|v| !v.is_empty());
     if flag("multiplayer") {
-        if flag("host") { set_default("MUGUET_HOST", "1"); }
-        else if let Some(v) = text("server") { set_default("MUGUET_SERVER", v); }
+        if flag("host") { std::env::set_var("MUGUET_HOST", "1"); }
+        else if let Some(v) = text("server") { std::env::set_var("MUGUET_SERVER", v); }
     }
-    if let Some(v) = text("player_name") { set_default("MUGUET_NAME", v); }
+    if let Some(v) = text("player_name") { std::env::set_var("MUGUET_NAME", v); }
 
     let mut engine_args = Vec::new();
 
