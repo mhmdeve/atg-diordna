@@ -201,10 +201,10 @@ public final class MainActivity extends Activity {
                 File stage = new File(root, "game.importing");
                 deleteTree(stage);
                 stage.mkdirs();
-                int copied = 0;
-                try (InputStream raw = new BufferedInputStream(getContentResolver().openInputStream(uri));
+                InputStream selected = getContentResolver().openInputStream(uri);
+                if (selected == null) throw new IllegalArgumentException("Unable to open selected zip.");
+                try (InputStream raw = new BufferedInputStream(selected);
                      ZipInputStream zip = new ZipInputStream(raw)) {
-                    if (raw == null) throw new IllegalArgumentException("Unable to open selected zip.");
                     ZipEntry entry;
                     boolean manifest = false, shaders = false;
                     while ((entry = zip.getNextEntry()) != null) {
@@ -223,14 +223,19 @@ public final class MainActivity extends Activity {
                             byte[] buffer = new byte[64 * 1024]; int n;
                             while ((n = zip.read(buffer)) > 0) stream.write(buffer, 0, n);
                         }
-                        copied++;
                     }
                     if (!manifest) throw new IllegalArgumentException("This zip has no data/manifest.json.");
                     if (!shaders) throw new IllegalArgumentException("This zip has no b/<build>/shaders/index.json.");
                 }
                 File old = new File(root, "game");
-                deleteTree(old);
-                if (!stage.renameTo(old)) throw new IllegalStateException("Could not finalize imported game data.");
+                File backup = new File(root, "game.previous");
+                deleteTree(backup);
+                if (old.exists() && !old.renameTo(backup)) throw new IllegalStateException("Could not preserve previous game data.");
+                if (!stage.renameTo(old)) {
+                    if (backup.exists()) backup.renameTo(old);
+                    throw new IllegalStateException("Could not finalize imported game data.");
+                }
+                deleteTree(backup);
             } catch (Throwable e) { error = e.getMessage() == null ? e.toString() : e.getMessage(); }
             final String err = error;
             runOnUiThread(() -> {
