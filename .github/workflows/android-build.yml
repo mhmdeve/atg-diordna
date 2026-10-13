@@ -1,10 +1,8 @@
 name: Android build
 
+# Intentionally manual-only while local laptop builds are being used.
+# Pushes to the android branch will not start a GitHub Actions build.
 on:
-  push:
-    branches: [android]
-  pull_request:
-    branches: [android]
   workflow_dispatch:
 
 jobs:
@@ -24,7 +22,9 @@ jobs:
       - name: Install Android NDK
         run: sdkmanager "ndk;27.2.12479018" "platforms;android-36" "build-tools;36.0.0"
       - name: Configure NDK
-        run: echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
       - name: Install Rust and cargo-ndk
         run: |
           rustup toolchain install stable --profile minimal
