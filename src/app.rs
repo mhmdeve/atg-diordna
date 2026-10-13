@@ -80,9 +80,11 @@ impl ApplicationHandler for App {
         crate::touch::install(&window);
         self.window = Some(window);
 
-        if !cfg!(target_os = "ios") {
+        if !cfg!(any(target_os = "ios", target_os = "android")) {
             self.start_engine();
         }
+        #[cfg(target_os = "android")]
+        self.start_engine();
     }
 
     fn suspended(&mut self, _el: &ActiveEventLoop) {
@@ -90,6 +92,8 @@ impl ApplicationHandler for App {
         input::set_focus(false);
         #[cfg(target_os = "ios")]
         crate::touch::release();
+        #[cfg(target_os = "android")]
+        crate::touch_android::release();
     }
 
     fn window_event(&mut self, _el: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
@@ -151,6 +155,8 @@ impl ApplicationHandler for App {
             }
             #[cfg(target_os = "ios")]
             WindowEvent::Touch(t) => crate::touch::touch(&t),
+            #[cfg(target_os = "android")]
+            WindowEvent::Touch(t) => crate::touch_android::touch(&t),
             WindowEvent::MouseWheel { delta, .. } => {
                 self.wheel_accum += match delta { MouseScrollDelta::LineDelta(_, y) => y as f64 / 3.0 * 3.0, MouseScrollDelta::PixelDelta(p) => p.y / 100.0 };
                 let n = self.wheel_accum.trunc();
@@ -166,6 +172,8 @@ impl ApplicationHandler for App {
         let mut wait = if crate::pad::poll() { 8 } else if cfg!(target_os = "ios") { 250 } else { 1000 };
         #[cfg(target_os = "ios")]
         if crate::touch::refresh() { wait = 15; }
+        #[cfg(target_os = "android")]
+        if crate::touch_android::refresh() { wait = 15; }
         #[cfg(target_os = "ios")]
         if crate::keyboard::poll() { wait = wait.min(8); }
         #[cfg(target_os = "ios")]
