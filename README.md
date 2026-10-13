@@ -1,108 +1,106 @@
-# Muguet
-A native Mach-O iOS/macOS port of GTA V, with multiplayer
+# Muguet for Android
 
-## How does this work ?
-this whole port relies on the WebAssembly compilation of the game. in a browser, that `game.wasm` runs inside the JS engine, behind WebGPU, Web Audio, web workers...
-Muguet throws that layer away and runs the same `game.wasm` as a regular native app, with [wasmtime](https://wasmtime.dev) for the code and [wgpu](https://wgpu.rs) on Metal for the graphics
+An experimental Android Studio port of Muguet, a native host for the game's WebAssembly build. The `android` branch adds an Android application around the existing Rust, Wasmtime, and wgpu engine while preserving the original iOS/macOS project and Apple-specific code.
 
-On macOS, the game code is compiled to native arm64 the first time you launch it, then cached. On iOS, we can't properly do that (i dont rlly want you to deal with the hassle of enabling JIT), so the game code is compiled when you build the app and baked into it
+> **Status: experimental.** The Android build is still being validated in GitHub Actions, and on-device graphics, touch controls, and gamepad behavior need physical-device testing. Do not treat this branch as a release-ready build yet.
 
-On top of that, Muguet adds a small UDP multiplayer (for other people who have the same port to play with you)
+## Android features and architecture
 
-## Game files
-Because I care about me not getting sued, you will need your own copy as a `.zip` : the folder holding `data/` and `b/<build>/` (with `game.wasm` and `shaders/`)
-
-It's basically the same source as the web port.
-
-Muguet itself will then asks for that zip
+- Android Studio project using Gradle.
+- Rust engine built for `arm64-v8a` (`aarch64-linux-android`) using `cargo-ndk`.
+- Winit Android NativeActivity integration.
+- wgpu selects Vulkan or GLES on Android; Apple platforms retain their Metal backend.
+- Android launcher supports game-data ZIP import and common game settings.
+- Game/config files are stored in the app-private files directory.
+- Android touch events are mapped to game input; visual touch-control parity and external controller support remain in progress.
 
 ## Requirements
-- Apple Silicon Mac, macOS 14 or later
-- Rust toolchain
-- Xcode 26 or later
 
-For iOS, also :
-- `rustup` with `rustup toolchain install 1.98.1` and `rustup target add aarch64-apple-ios --toolchain 1.98.1`
-- `xcodegen` (`brew install xcodegen`)
-- an Apple developer account
-- a device on iOS 15 or later, ideally 8 GB of RAM
+- Android Studio with the Android SDK and NDK installed.
+- Rust toolchain with the Android target.
+- `cargo-ndk`.
+- An arm64 Android device for meaningful testing.
+- Your own compatible game-data ZIP. This repository does not include game content.
 
-## Building
-The easy way, paste this in Terminal :
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/c22dev/muguet/main/build.sh)"
-```
-It downloads Muguet into `/tmp/muguet`, installs what's missing (Homebrew, Rust...), then asks whether you want the Mac or the iOS version and walks you through the rest. The `.app` / `.ipa` end up in `~/Downloads/muguetOutput`. Already have the repo ? Double-click `build.command`, or run `./build.sh`
+## Build in Android Studio
 
-You need Xcode 26 or later from the App Store. To install on your iPhone / iPad, sign in to Xcode with your Apple ID (Settings > Accounts), a free one works
+1. Check out the Android branch:
+   ```bash
+   git switch android
+   ```
+2. Install the Android SDK and NDK from Android Studio's **Tools → SDK Manager**.
+3. Install the Rust target and `cargo-ndk`:
+   ```bash
+   rustup target add aarch64-linux-android
+   cargo install cargo-ndk
+   ```
+4. Set `ANDROID_NDK_HOME` (or `ANDROID_NDK_ROOT`) to the installed NDK directory.
+5. Open the repository root in Android Studio, sync Gradle, select an arm64 device, and run the `app` configuration.
 
-By hand, macOS :
-```
-./make-app.sh
-```
-gives `build/Muguet.app`
-
-iOS :
-```
-TEAM=<your team id> ./make-ios.sh game.zip --install
-```
-`--ipa` makes `build/Muguet.ipa` instead. With a free account, add `FREE=1` (+ a `BUNDLE_ID` of your own)
-
-Please install this app with AltStore. This probably won't work well with Sideloadly (or even SideStore, as per [this issue])(https://github.com/SideStore/SideStore/issues/1616)
-
-The app also works with a paid developer account.
-
-
-## Android (experimental)
-
-An Android Studio port is available on the [`android`](https://github.com/mhmdeve/atg-diordna/tree/android) branch. The original iOS/macOS project and its Apple-specific code remain available.
-
-### Android requirements
-
-- Android Studio with Android SDK and NDK installed
-- Rust toolchain and the `aarch64-linux-android` target
-- `cargo-ndk`
-- An arm64 Android device for practical testing
-- Your own compatible game-data ZIP; game data is not included in this repository
-
-### Build for Android
-
-Switch to the Android branch:
+To build from a compatible shell, run:
 
 ```bash
-git switch android
-rustup target add aarch64-linux-android
-cargo install cargo-ndk
+bash ./gradlew assembleDebug
 ```
 
-Set `ANDROID_NDK_HOME` to the NDK directory installed by Android Studio, then build the native library:
+To build only the native Rust library:
 
 ```bash
 ./scripts/build-android.sh
 ```
 
-Alternatively, open the repository root in Android Studio, sync Gradle, and run the `app` configuration on an arm64 device. On Windows, use `gradlew.bat` for Gradle commands; the native Rust build script must also be run in a compatible shell with Rust and the Android NDK configured.
+On Windows, use `gradlew.bat` for Gradle commands and configure the Android NDK/Rust toolchain in a compatible shell for the native build.
 
-On first launch, choose **Import game data .zip** and select your own compatible archive containing `data/manifest.json` and `b/<build>/shaders/index.json`, then tap **Play**.
+## Game data
 
-### Android status and limitations
+On first launch, use **Import game data .zip** and select your own compatible archive. It should contain `data/manifest.json` and `b/<build>/shaders/index.json`. After import, tap **Play**. The game data is not provided by this repository.
 
-This is an **experimental, in-progress port**, not yet a verified release build. The Android Gradle project, native activity integration, Rust Android entry point, launcher settings, data import, and Android build workflow are present. A successful Android NDK/Gradle build and on-device runtime test have not yet been confirmed.
+## Android troubleshooting
 
-The Android launcher uses native Android views and is not pixel-identical to the SwiftUI/UIKit interface. The touch-input mapping is in progress; matching translucent joystick/button rendering and complete external game-controller parity still require implementation and physical-device testing. See [README-ANDROID.md](https://github.com/mhmdeve/atg-diordna/blob/android/README-ANDROID.md) for Android-specific setup and current limitations.
+- **`App is private` Rust compiler error:** the Android entry point and its `App` return type must have compatible visibility. The Android branch now declares the type `pub(crate)`.
+- **`gradlew: Permission denied` in CI:** the workflow invokes the wrapper with `bash ./gradlew assembleDebug`, so it does not rely on the executable bit being set.
+- **Missing Android target:** run `rustup target add aarch64-linux-android` with the Rust toolchain used by the build.
+- **NDK not found:** confirm `ANDROID_NDK_HOME` points to an installed NDK version.
 
-## Multiplayer
-One player hosts from the launcher (or runs `muguet-server` on any machine), the others join with that address. UDP port 47520
+The current workflow is available at [GitHub Actions](https://github.com/mhmdeve/atg-diordna/actions). A green workflow and physical-device testing are required before considering the port build-verified.
 
-## Limitations
-- iOS needs the increased memory limit entitlement
-- Story missions are single player only
+For more Android-specific details and current limitations, see [README-ANDROID.md](README-ANDROID.md).
+
+---
+
+## Original iOS/macOS port
+
+The original project supports Apple Silicon Macs (macOS 14 or later) and iOS. This Android branch does not replace the original Apple code or build process.
+
+The engine runs the same `game.wasm` as a native app using [Wasmtime](https://wasmtime.dev) and [wgpu](https://wgpu.rs). On macOS, the game code is compiled to native arm64 on first launch and cached. On iOS, the game code is compiled at build time and included in the app. Muguet also provides a small UDP multiplayer mode for other users of the port.
+
+### Original Apple build requirements
+
+- Apple Silicon Mac with macOS 14 or later.
+- Rust toolchain and Xcode 26 or later.
+- For iOS: `rustup` toolchain 1.98.1, the `aarch64-apple-ios` target, `xcodegen`, an Apple developer account, and an iOS 15 or later device (ideally 8 GB RAM).
+
+The original build scripts remain available:
+
+```bash
+./make-app.sh
+TEAM=<your-team-id> ./make-ios.sh game.zip --install
+```
+
+For an IPA, use `--ipa`; with a free developer account, set `FREE=1` and provide your own `BUNDLE_ID`. The original upstream build helper is documented in the Apple project workflow; these commands are not used for Android builds.
+
+## General limitations
+
+- iOS needs the increased memory-limit entitlement.
+- Story missions are single-player only.
+- The Android port remains experimental until CI and device testing pass.
 
 ## Credits
-- [Kagander](https://github.com/Kagander) for fixing the minimap
-- [inj-src](https://github.com/inj-src) for decoding bc textures on all cores
-- [Dbhardwaj99](https://github.com/Dbhardwaj99) for reporting real free disk space
-- [dre4moff](https://github.com/dre4moff) for releasing controller input when the app loses focus
-- [divyanshugarg36](https://github.com/divyanshugarg36) for keyboard support and steadier frames on iOS, the memory limit on free accounts, the frame rate label, and fixing the safehouse tv freeze and a pedestrian spawn crash
 
-Contributions are welcome !
+- [Kagander](https://github.com/Kagander) for fixing the minimap.
+- [inj-src](https://github.com/inj-src) for decoding BC textures on all cores.
+- [Dbhardwaj99](https://github.com/Dbhardwaj99) for reporting real free disk space.
+- [dre4moff](https://github.com/dre4moff) for releasing controller input when the app loses focus.
+- [divyanshugarg36](https://github.com/divyanshugarg36) for keyboard support and steadier frames on iOS, the memory limit on free accounts, the frame-rate label, and fixes for game crashes/freezes.
+
+Contributions are welcome!
