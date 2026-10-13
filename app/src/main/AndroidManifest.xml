@@ -8,7 +8,7 @@
     <application
         android:allowBackup="false"
         android:label="Muguet"
-        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:theme="@style/MuguetTheme"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
