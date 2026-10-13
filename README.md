@@ -49,6 +49,8 @@ To build only the native Rust library:
 ./scripts/build-android.sh
 ```
 
+The native build script targets Android API 28, matching the app's `minSdk`. This matters because CPAL's Android AAudio backend links `libaaudio`, which is available in the Android NDK sysroot starting at API 26.
+
 On Windows, use `gradlew.bat` for Gradle commands and configure the Android NDK/Rust toolchain in a compatible shell for the native build.
 
 ## Game data
@@ -59,6 +61,7 @@ On first launch, use **Import game data .zip** and select your own compatible ar
 
 - **`App is private` Rust compiler error:** the Android entry point and its `App` return type must have compatible visibility. The Android branch now declares the type `pub(crate)`.
 - **`gradlew: Permission denied` in CI:** the workflow invokes the wrapper with `bash ./gradlew assembleDebug`, so it does not rely on the executable bit being set.
+- **`ld.lld: error: unable to find library -laaudio`:** `scripts/build-android.sh` now passes `-p 28` to `cargo-ndk` so it uses the Android API 28 NDK sysroot. Confirm this flag is present and `ANDROID_NDK_HOME` points to the installed NDK.
 - **Missing Android target:** run `rustup target add aarch64-linux-android` with the Rust toolchain used by the build.
 - **NDK not found:** confirm `ANDROID_NDK_HOME` points to an installed NDK version.
 
