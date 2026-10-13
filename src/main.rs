@@ -52,16 +52,20 @@ pub struct HostState {
 pub static RT: OnceLock<Arc<Runtime>> = OnceLock::new();
 
 pub fn footprint_mb() -> u64 {
-    extern "C" {
-        fn proc_pid_rusage(pid: i32, flavor: i32, buffer: *mut u64) -> i32;
-        fn getpid() -> i32;
-    }
-
-    let mut info = [0u64; 16];
-    if unsafe { proc_pid_rusage(getpid(), 0, info.as_mut_ptr()) } != 0 {
+    #[cfg(target_os = "android")]
+    {
+        if let Ok(status) = std::fs::read_to_string("/proc/self/status") {
+            if let Some(kb) = status.lines().find_map(|line| line.strip_prefix("VmRSS:").and_then(|v| v.split_whitespace().next()).and_then(|v| v.parse::<u64>().ok())) { return kb / 1024; }
+        }
         return 0;
     }
-    info[2 + 7] >> 20
+    #[cfg(not(target_os = "android"))]
+    {
+        extern "C" { fn proc_pid_rusage(pid: i32, flavor: i32, buffer: *mut u64) -> i32; fn getpid() -> i32; }
+        let mut info = [0u64; 16];
+        if unsafe { proc_pid_rusage(getpid(), 0, info.as_mut_ptr()) } != 0 { return 0; }
+        info[2 + 7] >> 20
+    }
 }
 
 pub fn set_interactive_qos() {
@@ -70,10 +74,10 @@ pub fn set_interactive_qos() {
 const QOS_CLASS_USER_INTERACTIVE: u32 = 0x21;
 const QOS_CLASS_USER_INITIATED: u32 = 0x19;
 fn set_qos(class: u32) {
-    extern "C" {
-        fn pthread_set_qos_class_self_np(qos: u32, relpri: i32) -> i32;
-    }
-    unsafe { pthread_set_qos_class_self_np(class, 0) };
+    #[cfg(not(target_os = "android"))]
+    { extern "C" { fn pthread_set_qos_class_self_np(qos: u32, relpri: i32) -> i32; } unsafe { pthread_set_qos_class_self_np(class, 0) }; }
+    #[cfg(target_os = "android")]
+    { let _ = class; }
 }
 
 fn engine_thread_qos(name: &str) -> u32 {
