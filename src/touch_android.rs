@@ -115,7 +115,7 @@ fn apply(s:&mut State) {
                 Action::Mouse(b)=>mouse|=b,
                 Action::Horn=>horn=true,
                 Action::Nav=>{},
-                Action::Aim|Action::Nav=>{},
+                Action::Aim=>{},
             },
             Grip::Look{..}=>{}
         }
